@@ -113,6 +113,28 @@ open the `localhost` link.
 | `make synthetic` | Generates fake test data so you can run offline |
 | `make check` | Runs the whole analysis + builds the website, as a sanity check |
 
+## Putting it online (Vercel)
+
+The website works **without the data service** once it's deployed — the analysis
+results are bundled into it as plain files.
+
+1. Push the repo to GitHub (already done: `github.com/DeNoella/canary_311`).
+2. On [vercel.com](https://vercel.com) → **Add New → Project** → import
+   `canary_311`.
+3. Leave every build setting at its default and click **Deploy**. The repo's
+   `vercel.json` already tells Vercel to build the `frontend/` folder.
+4. You get a live URL. The 3D map, charts, and text all work — no server.
+
+**To update the live site with fresh data later:**
+
+```bash
+uv run canary                     # re-run the analysis
+cd frontend && npm run sync-data  # copy results into the site
+cd .. && git add frontend/public/data && git commit -m "refresh data" && git push
+```
+
+Vercel redeploys automatically on push.
+
 ## If something goes wrong
 
 - **Website loads but the map is empty / "needs the data service running"** —

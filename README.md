@@ -134,8 +134,22 @@ uv run uvicorn api.main:app --port 8000
 cd frontend && npm run dev        # http://localhost:5173  (proxies /api to :8000)
 ```
 
-Build a static dashboard with `cd frontend && npm run build` (outputs to
-`frontend/dist/`). Point it at a deployed API with `VITE_API_BASE`.
+## Deploy (static, no backend)
+
+The dashboard runs with **no backend** by baking the pipeline's JSON output into
+the site. `npm run dev` / `npm run build` first run `scripts/sync-data.mjs`,
+which copies `outputs/` → `frontend/public/data/` (a snapshot of that folder is
+committed so deploys work without running the pipeline). In a production build
+the app reads `/data/*.json` directly; set `VITE_API_BASE` only if you want it to
+talk to a live FastAPI instance instead.
+
+**Vercel:** import the repo — the root [`vercel.json`](vercel.json) already sets
+build command `cd frontend && npm ci && npm run build` and output
+`frontend/dist`, so no dashboard settings are needed. To refresh the deployed
+data: re-run `uv run canary`, then `cd frontend && npm run sync-data`, commit
+`frontend/public/data/`, and push.
+
+Any static host works: `cd frontend && npm run build` and serve `frontend/dist/`.
 
 ### Configuration (env vars)
 

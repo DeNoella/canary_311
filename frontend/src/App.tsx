@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api } from "./api";
+import { api, type Grid } from "./api";
 import type { Findings, Meta, ZipRecord } from "./types";
 import { CityScene } from "./components/CityScene";
 import { DetailPanel } from "./components/DetailPanel";
@@ -8,11 +8,6 @@ import { Legend } from "./components/Legend";
 import { Header, type View } from "./components/Header";
 import { Home } from "./components/Home";
 import { About } from "./components/About";
-
-interface Grid {
-  months: string[];
-  zips: Record<string, { volume: number[]; volume_z: (number | null)[]; velocity: (number | null)[] }>;
-}
 
 const VIEWS: View[] = ["home", "map", "how"];
 function readHash(): View {
@@ -55,13 +50,11 @@ export default function App() {
         setMeta(m);
       })
       .catch((e) => setError(String(e)));
-    fetch((import.meta.env.VITE_API_BASE ?? "/api") + "/grid")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((g: Grid | null) => {
-        if (g) {
-          setGrid(g);
-          setMonthIdx(g.months.length - 1);
-        }
+    api
+      .grid()
+      .then((g) => {
+        setGrid(g);
+        setMonthIdx(g.months.length - 1);
       })
       .catch(() => void 0);
   }, []);
