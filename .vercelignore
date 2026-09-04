@@ -1,0 +1,14 @@
+# Vercel only builds the static frontend (see vercel.json). Keep the Python
+# pipeline/API out of the deployment so Vercel doesn't detect it as a Python
+# project or turn api/*.py into serverless functions.
+/api
+/src
+/scripts
+/notebooks
+/data
+/cache
+/outputs
+/.venv
+/pyproject.toml
+/uv.lock
+/Makefile
