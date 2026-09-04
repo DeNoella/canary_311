@@ -14,7 +14,7 @@ of the full dataset.
 
 ## Headline
 
-Pooled across all shared ZIPs, the complaint signal shows no clear lead over home-value growth: the strongest forward correlation is r=-0.0837 at a 3-month offset (negatively associated), vs r=-0.0875 at offset 0. In the subset of ZIPs with the sharpest complaint increases, the relationship is stronger at r=-0.2716 at 6 months (p=0.0032, n=116) -- a tentative lead exactly where the hypothesis predicts one, but on a small sample. This is an exploratory, correlational result -- not causal.
+Pooled across all analysed neighborhoods, the complaint signal shows no clear lead over home-value growth: the strongest forward correlation is r=-0.0837 at a 3-month offset (negatively associated), vs r=-0.0875 at offset 0. In the subset of neighborhoods with the sharpest complaint increases, the relationship is stronger — r=-0.2716 at 6 months (p=0.0032, n=116) — a tentative lead exactly where the hypothesis predicts one, but on a small sample. This is an exploratory, correlational result — not causal.
 
 ## Lead-lag: complaint pressure (volume z-score) vs. ZHVI month-over-month change
 

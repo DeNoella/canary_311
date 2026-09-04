@@ -19,6 +19,10 @@ themes.
 > not a causal model and not a forecast. See [`FINDINGS.md`](FINDINGS.md) for what
 > the data actually shows and the limitations.
 
+**New here?** [`HOW_TO_RUN.md`](HOW_TO_RUN.md) is a plain-language, step-by-step
+guide. The dashboard itself also has a **Home** page and a **How it works** page
+explaining the project, methods, technologies, and data sources in simple terms.
+
 ---
 
 ## Architecture

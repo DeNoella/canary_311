@@ -5,13 +5,23 @@ import { CityScene } from "./components/CityScene";
 import { DetailPanel } from "./components/DetailPanel";
 import { FindingsPanel } from "./components/FindingsPanel";
 import { Legend } from "./components/Legend";
+import { Header, type View } from "./components/Header";
+import { Home } from "./components/Home";
+import { About } from "./components/About";
 
 interface Grid {
   months: string[];
   zips: Record<string, { volume: number[]; volume_z: (number | null)[]; velocity: (number | null)[] }>;
 }
 
+const VIEWS: View[] = ["home", "map", "how"];
+function readHash(): View {
+  const h = window.location.hash.replace("#", "") as View;
+  return VIEWS.includes(h) ? h : "home";
+}
+
 export default function App() {
+  const [view, setView] = useState<View>(readHash());
   const [zips, setZips] = useState<ZipRecord[] | null>(null);
   const [grid, setGrid] = useState<Grid | null>(null);
   const [findings, setFindings] = useState<Findings | null>(null);
@@ -21,8 +31,21 @@ export default function App() {
 
   const [monthIdx, setMonthIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const raf = useRef<number>();
   const last = useRef(0);
+
+  const navigate = (v: View) => {
+    window.location.hash = v;
+    setView(v);
+    window.scrollTo(0, 0);
+  };
+
+  useEffect(() => {
+    const onHash = () => setView(readHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   useEffect(() => {
     Promise.all([api.zips(), api.findings(), api.meta()])
@@ -44,7 +67,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!playing || !grid) return;
+    if (!playing || !grid || view !== "map") return;
     const tick = (t: number) => {
       if (t - last.current > 550) {
         last.current = t;
@@ -54,7 +77,7 @@ export default function App() {
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current!);
-  }, [playing, grid]);
+  }, [playing, grid, view]);
 
   const months = grid?.months ?? [];
   const month = months[monthIdx];
@@ -69,7 +92,6 @@ export default function App() {
     return zips ? Math.max(1, ...zips.map((z) => z.total_volume)) : 1;
   }, [grid, zips]);
 
-  // Per-ZIP value for the currently scrubbed month (falls back to snapshot).
   const monthValues = useMemo(() => {
     const m = new Map<string, { volume: number; z: number | null }>();
     if (grid) {
@@ -82,83 +104,146 @@ export default function App() {
     return m;
   }, [grid, monthIdx, zips]);
 
-  if (error) {
+  return (
+    <div className="shell">
+      <Header view={view} onNavigate={navigate} />
+      <main className="view">
+        {view === "home" && (
+          <Home
+            meta={meta}
+            findings={findings}
+            onExplore={() => navigate("map")}
+            onHow={() => navigate("how")}
+          />
+        )}
+        {view === "how" && <About meta={meta} onExplore={() => navigate("map")} />}
+        {view === "map" && (
+          <MapView
+            {...{
+              zips,
+              error,
+              months,
+              month,
+              monthIdx,
+              setMonthIdx,
+              playing,
+              setPlaying,
+              monthValues,
+              maxVol,
+              selected,
+              setSelected,
+              findings,
+              meta,
+              showHelp,
+              setShowHelp,
+              onHow: () => navigate("how"),
+            }}
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+function MapView(p: {
+  zips: ZipRecord[] | null;
+  error: string | null;
+  months: string[];
+  month: string;
+  monthIdx: number;
+  setMonthIdx: (n: number) => void;
+  playing: boolean;
+  setPlaying: (f: (p: boolean) => boolean) => void;
+  monthValues: Map<string, { volume: number; z: number | null }>;
+  maxVol: number;
+  selected: string | null;
+  setSelected: (z: string | null) => void;
+  findings: Findings | null;
+  meta: Meta | null;
+  showHelp: boolean;
+  setShowHelp: (f: (v: boolean) => boolean) => void;
+  onHow: () => void;
+}) {
+  if (p.error) {
     return (
       <div className="empty">
         <div>
-          <h1>Canary</h1>
-          <p>Couldn't reach the API ({error}).</p>
+          <h1>The map needs the data service running</h1>
+          <p className="muted">Couldn't reach the API ({p.error}).</p>
           <p className="muted">
-            Start it with <code>uv run uvicorn api.main:app --port 8000</code>{" "}
-            after running the pipeline (<code>uv run canary</code>).
+            Start it: <code>uv run uvicorn api.main:app --port 8000</code> (after{" "}
+            <code>uv run canary</code>).
           </p>
         </div>
       </div>
     );
   }
-
-  if (!zips) {
+  if (!p.zips) return <div className="empty"><div><p>Loading the map…</p></div></div>;
+  if (p.zips.length === 0)
     return (
       <div className="empty">
         <div>
-          <h1>🐤 Canary</h1>
-          <p>Loading…</p>
+          <p>The service is up but there's no analysis output yet.</p>
+          <p className="muted">Run <code>uv run canary</code>.</p>
         </div>
       </div>
     );
-  }
-
-  if (zips.length === 0) {
-    return (
-      <div className="empty">
-        <div>
-          <h1>🐤 Canary</h1>
-          <p>The API is up but there's no pipeline output yet.</p>
-          <p className="muted">
-            Run <code>uv run canary</code> to build <code>outputs/</code>.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="app">
       <div className="scene-wrap">
         <CityScene
-          zips={zips}
-          monthValues={monthValues}
-          maxVol={maxVol}
-          selected={selected}
-          onSelect={setSelected}
+          zips={p.zips}
+          monthValues={p.monthValues}
+          maxVol={p.maxVol}
+          selected={p.selected}
+          onSelect={p.setSelected}
         />
         <div className="scene-overlay">
-          <h1>
-            🐤 Canary <span className="dot">·</span>{" "}
-            <span className="muted" style={{ fontSize: 13 }}>
-              NYC 311 complaint pressure as an early-warning signal
-            </span>
-          </h1>
+          <p className="scene-title">
+            Complaint pressure across {p.zips.length} NYC neighborhoods
+          </p>
           <p>
-            {zips.length} ZIP codes · {meta?.window.start}–{meta?.window.end} ·
-            bar height = complaint volume · colour = complaint pressure (z-score)
+            Taller = more complaints · greener = normal · redder = unusually high ·
+            pulsing = rising fastest.{" "}
+            <button className="linkish" onClick={() => p.setShowHelp((v) => !v)}>
+              {p.showHelp ? "hide guide" : "how to read this"}
+            </button>
           </p>
           <Legend />
+          {p.showHelp && (
+            <div className="help-card">
+              <strong>Reading the map</strong>
+              <ul>
+                <li>Each block is one ZIP code, on its real map location.</li>
+                <li>Height = number of 311 complaints in the selected month.</li>
+                <li>
+                  Colour = "complaint pressure": how unusual that volume is vs. the
+                  ZIP's own recent history (green normal → red high).
+                </li>
+                <li>Press ▶ Play to watch 3 years pass. Drag to any month.</li>
+                <li>Click a block for its complaint-vs-home-value story.</li>
+              </ul>
+              <button className="linkish" onClick={p.onHow}>
+                Full methods & data sources →
+              </button>
+            </div>
+          )}
         </div>
-        {months.length > 0 && (
+        {p.months.length > 0 && (
           <div className="controls">
-            <button onClick={() => setPlaying((p) => !p)}>
-              {playing ? "❚❚ Pause" : "▶ Play"}
+            <button onClick={() => p.setPlaying((x) => !x)}>
+              {p.playing ? "❚❚ Pause" : "▶ Play"}
             </button>
-            <span className="month">{month}</span>
+            <span className="month">{p.month}</span>
             <input
               type="range"
               min={0}
-              max={months.length - 1}
-              value={monthIdx}
+              max={p.months.length - 1}
+              value={p.monthIdx}
               onChange={(e) => {
-                setPlaying(false);
-                setMonthIdx(+e.target.value);
+                p.setPlaying(() => false);
+                p.setMonthIdx(+e.target.value);
               }}
             />
           </div>
@@ -166,14 +251,19 @@ export default function App() {
       </div>
 
       <div className="panel">
-        {selected ? (
+        {p.selected ? (
           <DetailPanel
-            zip={selected}
-            record={zips.find((z) => z.zip === selected)!}
-            onClose={() => setSelected(null)}
+            zip={p.selected}
+            record={p.zips.find((z) => z.zip === p.selected)!}
+            onClose={() => p.setSelected(null)}
           />
         ) : (
-          <FindingsPanel findings={findings} meta={meta} zips={zips} onPick={setSelected} />
+          <FindingsPanel
+            findings={p.findings}
+            meta={p.meta}
+            zips={p.zips}
+            onPick={p.setSelected}
+          />
         )}
       </div>
     </div>

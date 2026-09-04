@@ -138,9 +138,9 @@ def _interpret(pooled: dict) -> str:
         "shows no clear lead over" if abs(best["r"]) < 0.1 else "moves with")
     sign = "negatively" if best["r"] < 0 else "positively"
     msg = (
-        f"Pooled across all shared ZIPs, the complaint signal {verb} home-value "
-        f"growth: the strongest forward correlation is r={best['r']} at a "
-        f"{best['offset']}-month offset ({sign} associated), vs "
+        f"Pooled across all analysed neighborhoods, the complaint signal {verb} "
+        f"home-value growth: the strongest forward correlation is r={best['r']} at "
+        f"a {best['offset']}-month offset ({sign} associated), vs "
         f"r={at0['r'] if at0 else 'n/a'} at offset 0. "
     )
     # Call out the "sharpest rise" subgroup if it shows a clearer forward signal.
@@ -149,10 +149,11 @@ def _interpret(pooled: dict) -> str:
         rbest = min(rise, key=lambda r: r["r"])
         if rbest["r"] < -0.2:
             msg += (
-                f"In the subset of ZIPs with the sharpest complaint increases, the "
-                f"relationship is stronger at r={rbest['r']} at {rbest['offset']} months "
-                f"(p={rbest['p']}, n={rbest['n']}) -- a tentative lead exactly where the "
-                f"hypothesis predicts one, but on a small sample. "
+                f"In the subset of neighborhoods with the sharpest complaint "
+                f"increases, the relationship is stronger — r={rbest['r']} at "
+                f"{rbest['offset']} months (p={rbest['p']}, n={rbest['n']}) — a "
+                f"tentative lead exactly where the hypothesis predicts one, but on "
+                f"a small sample. "
             )
-    msg += "This is an exploratory, correlational result -- not causal."
+    msg += "This is an exploratory, correlational result — not causal."
     return msg
