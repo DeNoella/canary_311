@@ -17,7 +17,7 @@ export function Header({
     <header className="site-header">
       <div className="header-inner">
         <button className="brand" onClick={() => onNavigate("home")}>
-          🐤 <span>Canary</span>
+          <span>Canary</span>
         </button>
         <nav>
           {TABS.map((t) => (
