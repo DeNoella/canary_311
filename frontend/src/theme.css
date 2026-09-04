@@ -44,10 +44,22 @@ body { background: var(--bg); color: var(--text); overflow: hidden; }
 .site-header .nav.active { color: var(--accent); }
 .site-header .nav.ext { margin-left: auto; }
 
+@media (max-width: 640px) {
+  .site-header { flex: 0 0 auto; height: auto; padding: 8px 0; }
+  .header-inner { flex-wrap: wrap; row-gap: 6px; padding: 0 16px; }
+  .site-header .brand { margin-left: -8px; }
+  .site-header nav { margin-left: 0; }
+  .site-header .nav.ext { display: none; }
+}
+
 .view { flex: 1; min-height: 0; overflow-y: auto; }
 
 .app { display: grid; grid-template-columns: 1fr 420px; height: 100%; }
-@media (max-width: 1100px) { .app { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 60vh auto; height: auto; min-height: 100%; }
+  .scene-wrap { min-height: 60vh; }
+  .panel { border-left: 0; border-top: 1px solid var(--border); }
+}
 
 /* ---------- content pages (Home / How it works) ---------- */
 .page { max-width: 860px; margin: 0 auto; padding: 40px 24px 64px; }
